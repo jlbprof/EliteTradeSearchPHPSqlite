@@ -71,6 +71,25 @@ class TradeSearchSQL
         return $output;
     }
 
+    public function getSystemByIdx ($idx)
+    {
+        $statement = $this->sqlite3_db->prepare ("SELECT * FROM Systems WHERE idx = :idx;");
+        $statement->bindParam (':idx', $idx);
+        $result = $statement->execute ();
+
+        $output = false;
+        if ($result->numColumns () > 0)
+        {
+            $res = $result->fetchArray (SQLITE3_ASSOC);
+            if ($res)
+            {
+                $output = $res;
+            }
+        }
+
+        return $output;
+    }
+
     public function getSystemByName ($name)
     {
         $statement = $this->sqlite3_db->prepare ("SELECT * FROM Systems WHERE name = :name;");
@@ -88,6 +107,27 @@ class TradeSearchSQL
         }
 
         return $output;
+    }
+
+    public function getSystemsWithinDistance ($system_id, $distance)
+    {
+        $distance_obj = TradeSearchDistance::getInstance ();
+
+        $master_system = $this->getSystemByID ($system_id);
+
+        $systems_idx_within_distance = $distance_obj->getSystemsWithinDistance ($master_system['idx'], $distance);
+        $systems_within_distance = array ();
+
+        foreach ($systems_idx_within_distance as $systems_idx)
+        {
+            $system = $this->getSystemByIdx ($systems_idx);
+            if ($system['id'] == $master_system['id'])
+                continue;
+
+            $systems_within_distance [] = $system;
+        }
+
+        return $systems_within_distance;
     }
 
     public function getStationsFromSystemID ($system_id)
@@ -128,7 +168,7 @@ class TradeSearchSQL
 
     public function getPricesByStationID ($station_id)
     {
-        $statement = $this->sqlite3_db->prepare ("SELECT p.id, p.station_id, c.name, p.supply, p.demand, p.buy_price, p.sell_price, p.collected_at FROM prices AS p JOIN commodities AS C ON c.id = p.commodity_id WHERE station_id = :station_id;");
+        $statement = $this->sqlite3_db->prepare ("SELECT p.id, p.station_id, c.name AS comm_name, p.commodity_id, p.supply, p.demand, p.buy_price, p.sell_price, p.collected_at, s.name AS station_name FROM prices AS p JOIN commodities AS c ON c.id = p.commodity_id JOIN stations AS s ON p.station_id = s.id WHERE station_id = :station_id;");
         $statement->bindParam (':station_id', $station_id);
         $result = $statement->execute ();
 
@@ -142,6 +182,20 @@ class TradeSearchSQL
 
         return $output;
     }
+
+    public function getPricesByStationIDReturnByCommID ($station_id)
+    {
+        $prices = $this->getPricesByStationID ($station_id);
+        $output = array ();
+
+        foreach ($prices as $price)
+        {
+            $output[$price['commodity_id']] = $price;
+        }
+
+        return $output;
+    }
+
 }
 
 ?>

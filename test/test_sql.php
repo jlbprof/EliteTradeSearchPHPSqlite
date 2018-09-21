@@ -46,12 +46,13 @@ $station_id_1 = 17874; # Fujimori Orbital
 # max_from_sun 'max_from_sun' max number of light seconds from sun
 
 $params = array ();
-$params ['min_demand'] = 1000;
+$params ['min_demand'] = 1;
 $params ['pad_size'] = 'L';
-$params ['max_age'] = 5;
-$params ['max_from_sun'] = 5000;
+$params ['max_age'] = 3;
+$params ['max_from_sun'] = 50000;
 
 $ts = new TradeSearch ();
-$ts->findTradeBetweenTwoSystems ($system_id_1, $system_id_2, $params);
+#$ts->findTradeBetweenTwoSystems ($system_id_1, $system_id_2, $params);
+$ts->exploreTradeFromSystemID ($system_id_1, 80, 15, $params)
 
 ?>
